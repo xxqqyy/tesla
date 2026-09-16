@@ -187,7 +187,7 @@ const processAuthData = (authData) => {
 // 获取基础 URL
 const getBaseUrl = () => {
   // #ifdef H5
-  return ''
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:1255'
   // #endif
 
   // #ifdef APP-PLUS

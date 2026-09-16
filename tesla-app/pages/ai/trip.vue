@@ -61,11 +61,13 @@ import Icon from '@/components/Icon/Icon.vue'
 import NavBar from '@/components/NavBar/NavBar.vue'
 import { useThemeStore } from '@/store/theme'
 import { useVehicleData } from '@/utils/vehicle-data.js'
+import { useVehicleStore } from '@/store/vehicle'
 
 const themeStore = useThemeStore()
 const themeClass = computed(() => themeStore.themeClass)
 const hintColor = computed(() => themeStore.colors.hint)
 const vehicleStore = useVehicleData()
+const vehicleListStore = useVehicleStore()
 
 const vin = ref('')
 const list = ref([])
@@ -76,8 +78,9 @@ const expandedId = ref(null)
 const filter = ref('')
 
 onLoad((options) => {
-  vin.value = options?.vin || ''
+  vin.value = options?.vin || vehicleListStore.currentVehicle?.vin || uni.getStorageSync('currentVehicleVIN') || ''
   if (vin.value) loadList()
+  else loading.value = false
 })
 
 watch(() => vehicleStore.analysisNotification, (notification) => {
@@ -93,7 +96,10 @@ const loadList = async () => {
   try {
     const params = { page: page.value, page_size: 20 }
     if (filter.value) params.ref_type = filter.value
-    const res = await getAnalysisList(vin.value, 'trip', params.page, params.page_size)
+    const res = await Promise.race([
+      getAnalysisList(vin.value, 'trip', params.page, params.page_size),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('AI分析请求超时')), 15000))
+    ])
     const newList = res?.data?.list || []
     if (page.value === 1) {
       list.value = newList
@@ -101,8 +107,11 @@ const loadList = async () => {
       list.value = [...list.value, ...newList]
     }
     if (newList.length < 20) noMore.value = true
-  } catch (e) {}
-  loading.value = false
+  } catch (e) {
+    console.warn('[TripAI] load list failed:', e)
+  } finally {
+    loading.value = false
+  }
 }
 
 const loadMore = () => {

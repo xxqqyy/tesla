@@ -114,8 +114,18 @@ const doLogin = async () => {
   loading.value = true
   try {
     await userStore.loginAction({ username: username.value, password: password.value })
-    await vehicleStore.fetchVehicles()
-    uni.reLaunch({ url: '/pages/dashboard/dashboard' })
+    // Do not block navigation on the optional vehicle-list request. The dashboard
+    // fetches it again after the authenticated page is mounted.
+    uni.reLaunch({
+      url: '/pages/dashboard/dashboard',
+      fail: (err) => {
+        console.error('[Login] dashboard navigation failed:', err)
+        uni.navigateTo({ url: '/pages/dashboard/dashboard' })
+      }
+    })
+    vehicleStore.fetchVehicles().catch((err) => {
+      console.warn('[Login] vehicle list preload failed:', err)
+    })
   } catch (e) {
     uni.showToast({ title: e.message || '登录失败', icon: 'none' })
   } finally {

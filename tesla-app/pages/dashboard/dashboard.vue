@@ -727,9 +727,14 @@
     // ===================== 3D模型车辆数据同步 =====================
     const teslaSceneRef = ref(null)
     const modelLoaded = ref(false)
-
+    let modelLoadFallbackTimer = null
+    
     function onModelLoaded() {
         modelLoaded.value = true
+        if (modelLoadFallbackTimer) {
+            clearTimeout(modelLoadFallbackTimer)
+            modelLoadFallbackTimer = null
+        }
     }
 
     // 传递给 renderjs 的 state 对象
@@ -965,6 +970,11 @@
     })
 
     onMounted(async () => {
+        // H5 renderjs can lose the callback after the WebGL model is visible.
+        // Avoid leaving an invisible loading mask over an already-rendered scene.
+        modelLoadFallbackTimer = setTimeout(() => {
+            if (!modelLoaded.value) modelLoaded.value = true
+        }, 15000)
         if (!vehicleStore.hasVehicles) {
             await vehicleStore.fetchVehicles()
         }
@@ -999,6 +1009,10 @@
     })
 
     onUnmounted(() => {
+        if (modelLoadFallbackTimer) {
+            clearTimeout(modelLoadFallbackTimer)
+            modelLoadFallbackTimer = null
+        }
         destroyVehicleData()
     })
 

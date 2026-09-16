@@ -2,7 +2,7 @@
 	<view class="custom-tabbar">
 		<view class="tabbar-content">
 			<view v-for="(item, index) in tabList" :key="index" class="tab-item"
-				:class="{ active: currentIndex === index }" @click="switchTab(index, item.pagePath)">
+				:class="{ active: currentIndex === index }" @tap="switchTab(index, item.pagePath)">
 				<Icon :name="item.icon" :size="24" :color="currentIndex === index ? activeColor : inactiveColor" />
 				<text class="tab-text" :class="{ 'tab-text-active': currentIndex === index }">
 					{{ item.text }}
@@ -64,8 +64,17 @@
 
 	const switchTab = (index, pagePath) => {
 		if (index === props.currentIndex) return
-		uni.reLaunch({
-			url: pagePath
+		uni.redirectTo({
+			url: pagePath,
+			fail: (redirectError) => {
+				console.warn('[TabBar] redirectTo failed, retrying reLaunch:', redirectError)
+				uni.reLaunch({
+					url: pagePath,
+					fail: (relaunchError) => {
+						console.error('[TabBar] navigation failed:', relaunchError)
+					}
+				})
+			}
 		})
 	}
 </script>

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { login, getUserInfo, refreshToken as refreshTokenApi } from '@/api/user.js'
+import { login, register as registerApi, getUserInfo, refreshToken as refreshTokenApi } from '@/api/user.js'
 import { destroyGlobalWS } from '@/utils/vehicle-data'
 
 export const useUserStore = defineStore('user', () => {
@@ -73,6 +73,10 @@ export const useUserStore = defineStore('user', () => {
     return res
   }
 
+  const registerAction = async (data) => {
+    return await registerApi(data)
+  }
+
   const refreshTokenAction = async () => {
     if (!refreshToken.value) {
       clearAuth()
@@ -122,6 +126,7 @@ export const useUserStore = defineStore('user', () => {
     setUserInfo,
     setCurrentVehicle,
     clearAuth,
+    register: registerAction,
     loginAction,
     refreshTokenAction,
     fetchUserInfo,
