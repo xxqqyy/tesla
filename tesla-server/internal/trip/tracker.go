@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"tesla-server/internal/ai"
 	"tesla-server/internal/database"
 	"tesla-server/internal/fleet"
 	"tesla-server/internal/geo"
@@ -252,8 +251,7 @@ func endTrip(vin string, data *fleet.SimpleVehicleData) {
 		var v models.TeslaVehicle
 		if err := database.DB.Where("vin = ? AND bind_status = 1", vin).First(&v).Error; err == nil {
 			refID := fmt.Sprintf("trip:%d", state.TripID)
-			go ai.RunTripAnalysis(vin, v.UserID, refID)
-			// 通知前端行程已结束并开始AI分析
+			// 通知前端行程已结束
 			ws.DefaultHub.BroadcastToVIN(vin, "trip_ended", map[string]interface{}{
 				"trip_id": state.TripID,
 				"ref_id":  refID,
@@ -472,13 +470,13 @@ func GetTripStats(vin string, startDate, endDate time.Time) (map[string]interfac
 }
 
 type MonthlyStatsItem struct {
-	Month           string   `json:"month"`
-	TripCount       int      `json:"trip_count"`
-	TotalDistance    float64  `json:"total_distance"`
-	TotalEnergy     float64  `json:"total_energy"`
-	AvgConsumption  float64  `json:"avg_consumption"`
-	TotalDuration   int      `json:"total_duration"`    // 总行驶时长（秒）
-	TotalCost       *float64 `json:"total_cost"`        // 总电费（元）
+	Month          string   `json:"month"`
+	TripCount      int      `json:"trip_count"`
+	TotalDistance  float64  `json:"total_distance"`
+	TotalEnergy    float64  `json:"total_energy"`
+	AvgConsumption float64  `json:"avg_consumption"`
+	TotalDuration  int      `json:"total_duration"` // 总行驶时长（秒）
+	TotalCost      *float64 `json:"total_cost"`     // 总电费（元）
 }
 
 func GetMonthlyTripList(vin string) ([]MonthlyStatsItem, error) {
@@ -587,7 +585,7 @@ func calcMonthStats(vin string, monthLabel string, startDate, endDate time.Time)
 	return &MonthlyStatsItem{
 		Month:          monthLabel,
 		TripCount:      tripCount,
-		TotalDistance:   totalDistance,
+		TotalDistance:  totalDistance,
 		TotalEnergy:    totalEnergy,
 		AvgConsumption: avgConsumption,
 	}, nil

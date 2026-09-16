@@ -179,27 +179,6 @@
       }
     },
     {
-      "path": "pages/ai/trip",
-      "style": {
-        "navigationBarTitleText": "行车AI分析",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/ai/charging",
-      "style": {
-        "navigationBarTitleText": "充电AI分析",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/ai/vehicle",
-      "style": {
-        "navigationBarTitleText": "车辆AI分析报告",
-        "navigationStyle": "custom"
-      }
-    },
-    {
       "path": "pages/dashcam/index",
       "style": {
         "navigationBarTitleText": "行车记录仪",

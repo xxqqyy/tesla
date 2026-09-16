@@ -1,14 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 	"tesla-server/config"
-	"tesla-server/internal/ai"
 	"tesla-server/internal/auth"
 	"tesla-server/internal/database"
 	"tesla-server/internal/fleet"
@@ -19,6 +16,7 @@ import (
 	"tesla-server/internal/ws"
 	"tesla-server/models"
 	"tesla-server/routes"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -157,53 +155,6 @@ func main() {
 			next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 5, 0, now.Location())
 			time.Sleep(next.Sub(now))
 			logger.Rotate()
-		}
-	}()
-
-	go func() {
-		for {
-			now := time.Now()
-			next := time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, now.Location())
-			if next.Before(now) {
-				next = next.AddDate(0, 0, 1)
-			}
-			time.Sleep(next.Sub(now))
-			var vehicles []models.TeslaVehicle
-			if err := database.DB.Where("bind_status = 1").Find(&vehicles).Error; err != nil {
-				continue
-			}
-			for _, v := range vehicles {
-				today := time.Now().Format("2006-01-02")
-				go ai.RunVehicleAnalysis(v.VIN, v.UserID, today)
-				time.Sleep(3 * time.Second)
-			}
-		}
-	}()
-
-	go func() {
-		for {
-			now := time.Now()
-			next := time.Date(now.Year(), now.Month()+1, 1, 0, 10, 0, 0, now.Location())
-			if now.Day() == 1 && now.Hour() == 0 && now.Minute() < 15 {
-				next = now
-			}
-			time.Sleep(next.Sub(now))
-
-			var vehicles []models.TeslaVehicle
-			if err := database.DB.Where("bind_status = 1").Find(&vehicles).Error; err != nil {
-				continue
-			}
-
-			lastMonth := time.Now().AddDate(0, -1, 0).Format("2006-01")
-			for _, v := range vehicles {
-				tripRefID := fmt.Sprintf("trip_monthly:%s", lastMonth)
-				go ai.RunTripAnalysis(v.VIN, v.UserID, tripRefID)
-				time.Sleep(2 * time.Second)
-
-				chargingRefID := fmt.Sprintf("charging_monthly:%s", lastMonth)
-				go ai.RunChargingAnalysis(v.VIN, v.UserID, chargingRefID)
-				time.Sleep(2 * time.Second)
-			}
 		}
 	}()
 

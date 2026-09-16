@@ -64,8 +64,8 @@
 							</view>
 						</view>
 
-						<!-- 行车AI分析 -->
-						<view class="feature-card" @click.stop="goToTripAI(vehicle)">
+						<!-- AI analysis removed; raw trip and charging data remain available in their dedicated pages. -->
+						<!--
 							<view class="feature-icon-wrap trip-icon">
 								<Icon name="Navigate" :size="22" color="#fff" />
 							</view>
@@ -77,8 +77,9 @@
 								<text class="feature-action-text">查看报告</text>
 							<Icon name="ChevronForward" :size="18" themeColor="hint" />
 						</view>
-					</view>
+						-->
 
+					<!--
 					<!-- 充电AI分析 -->
 						<view class="feature-card" @click.stop="goToChargingAI(vehicle)">
 							<view class="feature-icon-wrap charging-icon">
@@ -108,6 +109,7 @@
 							<Icon name="ChevronForward" :size="18" themeColor="hint" />
 						</view>
 					</view>
+					-->
 				</view>
 				</view>
 			</view>
@@ -192,9 +194,6 @@
 	} from '@/store/theme'
 	import TabBar from '@/components/TabBar/TabBar.vue'
 	import {
-		getLatestAnalysis
-	} from '@/api/ai.js'
-	import {
 		getPairingURL,
 		getFleetStatus
 	} from '@/api/vehicle.js'
@@ -213,10 +212,6 @@
 	const currentVehicle = computed(() => vehicleStore.currentVehicle)
 	const loading = computed(() => vehicleStore.loading)
 
-	const vehicleTripSummary = ref({})
-	const vehicleChargingSummary = ref({})
-	const vehicleReportSummary = ref({})
-
 	const vehicleKeys = reactive({})
 	const keyChecking = reactive({})
 
@@ -225,19 +220,6 @@
 	const pairingChecking = ref(false)
 	const pairingPaired = ref(false)
 	const pairingVIN = ref('')
-
-	const loadLatestSummaries = async (vin) => {
-		try {
-			const [tripRes, chargingRes, vehicleRes] = await Promise.all([
-				getLatestAnalysis(vin, 'trip'),
-				getLatestAnalysis(vin, 'charging'),
-				getLatestAnalysis(vin, 'vehicle')
-			])
-			if (tripRes?.data?.summary) vehicleTripSummary.value[vin] = tripRes.data.summary
-			if (chargingRes?.data?.summary) vehicleChargingSummary.value[vin] = chargingRes.data.summary
-			if (vehicleRes?.data?.summary) vehicleReportSummary.value[vin] = vehicleRes.data.summary
-		} catch (e) {}
-	}
 
 	const checkVehicleKeyStatus = async (vin) => {
 		keyChecking[vin] = true
@@ -261,7 +243,6 @@
 		const res = await vehicleStore.fetchVehicles()
 		const list = vehicleStore.vehicles
 		list.forEach(v => {
-			loadLatestSummaries(v.vin)
 			if (vehicleKeys[v.vin] === undefined) {
 				checkVehicleKeyStatus(v.vin)
 			}
@@ -364,21 +345,6 @@
 		}
 	}
 
-	const goToTripAI = (vehicle) => {
-		uni.navigateTo({
-			url: `/pages/ai/trip?vin=${vehicle.vin}`
-		})
-	}
-	const goToChargingAI = (vehicle) => {
-		uni.navigateTo({
-			url: `/pages/ai/charging?vin=${vehicle.vin}`
-		})
-	}
-	const goToVehicleAI = (vehicle) => {
-		uni.navigateTo({
-			url: `/pages/ai/vehicle?vin=${vehicle.vin}`
-		})
-	}
 </script>
 
 <style lang="scss" scoped>

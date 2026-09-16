@@ -62,6 +62,8 @@
           </view>
         </view>
 
+        <!-- AI analysis removed; vehicle telemetry and raw status remain below. -->
+        <!--
         <view class="glass-card ai-analysis-card">
           <view class="card-header">
             <Icon name="Sparkles" :size="20" themeColor="primary" />
@@ -92,6 +94,7 @@
             </view>
           </view>
         </view>
+        -->
 
         <view class="glass-card" v-if="vehicleData">
           <view class="card-header">
@@ -495,7 +498,6 @@ import { useVehicleStore } from '@/store/vehicle'
 import { useThemeStore } from '@/store/theme'
 import { useVehicleData, initVehicleData, destroyVehicleData, suspendVehicleData } from '@/utils/vehicle-data'
 import { getDisplayStateLabel, getDisplayStateColor, getChargeType } from '@/utils/vehicle-state'
-import { getLatestAnalysis, triggerVehicleAnalysis } from '@/api/ai.js'
 import Icon from '@/components/Icon/Icon.vue'
 import NavBar from '@/components/NavBar/NavBar.vue'
 
@@ -522,10 +524,6 @@ const sentryOnColor = computed(() => themeStore.colors.sentryOn)
 const doorOpenColor = computed(() => themeStore.colors.doorOpen)
 const warningColor = computed(() => themeStore.colors.warning)
 const infoBlueColor = computed(() => themeStore.colors.info)
-
-const aiResult = ref(null)
-const aiLoading = ref(false)
-const aiExpanded = ref(false)
 
 const stateText = computed(() => getDisplayStateLabel(stateOutput.value, vehicleData.value))
 
@@ -593,41 +591,6 @@ const goToTrip = () => {
   uni.navigateTo({ url: '/pages/trip/trip' })
 }
 
-const loadAIAnalysis = async () => {
-  const vin = currentVehicle.value?.vin
-  if (!vin) return
-  try {
-    const res = await getLatestAnalysis(vin, 'vehicle')
-    if (res?.data) {
-      aiResult.value = res.data
-    }
-  } catch (e) {}
-}
-
-const triggerAnalysis = async () => {
-  const vin = currentVehicle.value?.vin
-  if (!vin || aiLoading.value) return
-  aiLoading.value = true
-  try {
-    await triggerVehicleAnalysis(vin)
-    setTimeout(async () => {
-      await loadAIAnalysis()
-      aiLoading.value = false
-    }, 15000)
-  } catch (e) {
-    aiLoading.value = false
-  }
-}
-
-const goToVehicleAI = () => {
-  const vin = currentVehicle.value?.vin || ''
-  uni.navigateTo({ url: `/pages/ai/vehicle?vin=${vin}` })
-}
-
-const getAiLines = () => {
-  if (!aiResult.value?.result) return []
-  return aiResult.value.result.split('\n').filter(l => l.trim()).map(l => l.replace(/^#{1,3}\s*/, '').replace(/\*\*/g, '').replace(/^[-*]\s*/, '• ').trim())
-}
 
 onMounted(() => {
   if (!currentVehicle.value) {
@@ -636,7 +599,6 @@ onMounted(() => {
   if (currentVehicle.value?.vin) {
     initVehicleData(currentVehicle.value.vin)
   }
-  loadAIAnalysis()
 })
 
 onShow(() => {

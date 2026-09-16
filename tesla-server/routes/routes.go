@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"tesla-server/config"
-	"tesla-server/internal/ai"
 	"tesla-server/internal/charging"
 	"tesla-server/internal/database"
 	"tesla-server/internal/fleet"
@@ -98,16 +97,6 @@ func Setup(r *gin.Engine) {
 			authorized.GET("/charging/:vin/monthly-list", checkVehicleOwner, getMonthlyChargingList)
 			authorized.GET("/charging/:vin/monthly-stats", checkVehicleOwner, getMonthlyChargingStats)
 			authorized.POST("/charging/log/:id/price", checkChargingLogOwner, updateChargingPrice)
-
-			authorized.GET("/ai/trip/:vin/:refId", checkVehicleOwner, ai.GetTripAnalysis)
-			authorized.GET("/ai/charging/:vin/:refId", checkVehicleOwner, ai.GetChargingAnalysis)
-			authorized.GET("/ai/vehicle/:vin", checkVehicleOwner, ai.GetVehicleAnalysis)
-			authorized.POST("/ai/trip/:vin/:refId", checkVehicleOwner, ai.TriggerTripAnalysis)
-			authorized.POST("/ai/charging/:vin/:refId", checkVehicleOwner, ai.TriggerChargingAnalysis)
-			authorized.POST("/ai/vehicle/:vin", checkVehicleOwner, ai.TriggerVehicleAnalysis)
-			authorized.GET("/ai/history/:vin", checkVehicleOwner, ai.GetAnalysisHistory)
-			authorized.GET("/ai/list/:vin", checkVehicleOwner, ai.GetAnalysisList)
-			authorized.GET("/ai/latest/:vin/:type", checkVehicleOwner, ai.GetLatestAnalysis)
 
 			authorized.POST("/vcp/door_lock", vcp.DoorLock)
 			authorized.POST("/vcp/door_unlock", vcp.DoorUnlock)
@@ -196,7 +185,7 @@ func getVehicleState(c *gin.Context) {
 				"gear":        "P",
 			},
 			"charge": map[string]interface{}{
-				"charge_state": "disconnected",
+				"charge_state":  "disconnected",
 				"battery_level": 0,
 			},
 			"lock": map[string]interface{}{
@@ -344,12 +333,12 @@ func returnCachedState(c *gin.Context, vin, errorType, errorMsg string) {
 		c.JSON(http.StatusOK, gin.H{
 			"code": 200,
 			"data": gin.H{
-				"response":          cachedState,
-				"state":             cachedState.State,
-				"cached":            true,
-				"last_success_at":   time.Now().Add(-5 * time.Minute).Unix(), // 估算时间
-				"error_type":        errorType,
-				"error_message":     errorMsg,
+				"response":        cachedState,
+				"state":           cachedState.State,
+				"cached":          true,
+				"last_success_at": time.Now().Add(-5 * time.Minute).Unix(), // 估算时间
+				"error_type":      errorType,
+				"error_message":   errorMsg,
 			},
 		})
 		return
@@ -529,7 +518,7 @@ func updateChargingPrice(c *gin.Context) {
 
 	var req struct {
 		PricePerKwh *float64 `json:"price_per_kwh"` // 慢充：电价（元/kWh）
-		TotalCost   *float64 `json:"total_cost"`   // 快充：总费用（元）
+		TotalCost   *float64 `json:"total_cost"`    // 快充：总费用（元）
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
